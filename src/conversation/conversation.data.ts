@@ -486,4 +486,50 @@ export class ConversationData implements IConversationData {
     this.conversationCacheManagerService.set(conversation, conversationId);
     return conversation;
   }
+
+  // allow user to add tags to a message
+  async addMessageTags(
+    conversationId: string,
+    messageId: ObjectID,
+    tags: Tag[],
+  ): Promise<ChatConversationModel> {
+    const result = await this.chatConversationModel.findOneAndUpdate
+    (
+      { _id: conversationId },
+      {
+        $addToSet: {
+          messageTags: { messageId, tags },
+        },
+      },
+      { new: true },
+    );
+    if (!result) throw new Error('Could not add tags to message');
+
+    const conversation = chatConversationToObject(result);
+    this.conversationCacheManagerService.set(conversation, conversationId);
+    return conversation;
+  }
+
+  // allow user to remove tags from a message
+  async removeMessageTags(
+    conversationId: string,
+    messageId: ObjectID,
+    tags: Tag[],
+  ): Promise<ChatConversationModel> {
+    const result = await this.chatConversationModel.findOneAndUpdate
+    (
+      { _id: conversationId },
+      {
+        $pull: {
+          messageTags: { messageId, tags },
+        },
+      },
+      { new: true },
+    );
+    if (!result) throw new Error('Could not remove tags from message');
+
+    const conversation = chatConversationToObject(result);
+    this.conversationCacheManagerService.set(conversation, conversationId);
+    return conversation;
+  }
 }
